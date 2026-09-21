@@ -159,12 +159,12 @@ def build_transition_matrix(categories: pd.Series) -> pd.DataFrame:
     
     all_categories = sorted(cats.unique())
     
-    # Count transitions
-    transition_counts = pd.DataFrame(0, index=all_categories, columns=all_categories, dtype=float)
+    # Count transitions with Laplace smoothing (prevents 100% absorbing loops)
+    transition_counts = pd.DataFrame(0.1, index=all_categories, columns=all_categories, dtype=float)
     for i in range(len(cats) - 1):
         from_cat = cats.iloc[i]
         to_cat = cats.iloc[i + 1]
-        transition_counts.loc[from_cat, to_cat] += 1
+        transition_counts.loc[from_cat, to_cat] += 1.0
     
     # Normalize rows to get probabilities
     row_sums = transition_counts.sum(axis=1)

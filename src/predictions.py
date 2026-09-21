@@ -141,12 +141,28 @@ def simulate_future_breakdowns(
             break
         
         # Predict category
-        cat_predictions = predict_next_category(transition_matrix, current_category, top_n=3)
+        cat_predictions = predict_next_category(transition_matrix, current_category, top_n=len(transition_matrix.columns))
         
         if cat_predictions:
-            predicted_cat = cat_predictions[0]['category']
-            predicted_prob = cat_predictions[0]['probability']
-            top3_str = ' | '.join([f"{p['category']}: {p['probability']*100:.0f}%" for p in cat_predictions])
+            # Extract categories and probabilities for sampling
+            cats = [p['category'] for p in cat_predictions]
+            probs = [p['probability'] for p in cat_predictions]
+            
+            # Normalize just in case
+            probs = np.array(probs) / np.sum(probs)
+            
+            # Seed based on event_num and current date to make it deterministic across reruns but varied internally
+            np.random.seed(hash(f"{event_num}_{current_date.strftime('%Y%m%d')}") % (2**32 - 1))
+            
+            # Sample probabilistically
+            predicted_cat = np.random.choice(cats, p=probs)
+            
+            # Find the actual probability of the chosen category
+            predicted_prob = next(p['probability'] for p in cat_predictions if p['category'] == predicted_cat)
+            
+            # Top 3 string for display
+            top_3 = sorted(cat_predictions, key=lambda x: x['probability'], reverse=True)[:3]
+            top3_str = ' | '.join([f"{p['category']}: {p['probability']*100:.0f}%" for p in top_3])
         else:
             predicted_cat = 'Unknown'
             predicted_prob = 0.0
