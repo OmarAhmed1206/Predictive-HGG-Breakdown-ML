@@ -132,6 +132,10 @@ def simulate_future_breakdowns(
     p25_ttf = weibull_percentile(model, 0.25)
     p75_ttf = weibull_percentile(model, 0.75)
     
+    # Single RNG seeded once for the entire simulation — each loop iteration
+    # advances the internal state, producing genuinely different draws.
+    rng = np.random.RandomState(42)
+    
     while True:
         event_num += 1
         next_date = current_date + timedelta(days=ttf)
@@ -140,33 +144,25 @@ def simulate_future_breakdowns(
         if (next_date - now).total_seconds() / 86400 > horizon_days:
             break
         
-        # Predict category
-        cat_predictions = predict_next_category(transition_matrix, current_category, top_n=len(transition_matrix.columns))
-        
-        if cat_predictions:
-            # Extract categories and probabilities for sampling
-            cats = [p['category'] for p in cat_predictions]
-            probs = [p['probability'] for p in cat_predictions]
-            
-            # Normalize just in case
-            probs = np.array(probs) / np.sum(probs)
-            
-            # Seed based on event_num and current date to make it deterministic across reruns but varied internally
-            np.random.seed(hash(f"{event_num}_{current_date.strftime('%Y%m%d')}") % (2**32 - 1))
-            
-            # Sample probabilistically
-            predicted_cat = np.random.choice(cats, p=probs)
-            
-            # Find the actual probability of the chosen category
-            predicted_prob = next(p['probability'] for p in cat_predictions if p['category'] == predicted_cat)
-            
-            # Top 3 string for display
-            top_3 = sorted(cat_predictions, key=lambda x: x['probability'], reverse=True)[:3]
-            top3_str = ' | '.join([f"{p['category']}: {p['probability']*100:.0f}%" for p in top_3])
+        # Get full transition row for current_category
+        if current_category in transition_matrix.index:
+            row = transition_matrix.loc[current_category]
         else:
-            predicted_cat = 'Unknown'
-            predicted_prob = 0.0
-            top3_str = 'No data'
+            # Fallback: use column-wise mean (overall distribution)
+            row = transition_matrix.mean(axis=0)
+        
+        cats = row.index.tolist()
+        probs = row.values.astype(float)
+        probs = probs / probs.sum()  # normalise
+        
+        # Sample from the distribution
+        predicted_cat = rng.choice(cats, p=probs)
+        predicted_prob = float(row[predicted_cat])
+        
+        # Top 3 for display (always sorted by probability)
+        sorted_idx = np.argsort(-probs)
+        top_3 = [(cats[i], probs[i]) for i in sorted_idx[:3]]
+        top3_str = ' | '.join([f"{c}: {p*100:.0f}%" for c, p in top_3])
         
         days_from_now = (next_date - now).total_seconds() / 86400
         

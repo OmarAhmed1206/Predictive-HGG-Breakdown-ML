@@ -48,25 +48,34 @@ st.markdown("""
     .kpi-card {
         background-color: #1e1e1e;
         border-radius: 8px;
-        padding: 20px;
+        padding: 12px 8px;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         text-align: center;
         border-left: 5px solid #0078D7;
         margin-bottom: 20px;
+        min-height: 100px;
+        overflow: visible;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
     }
     .kpi-value {
-        font-size: 28px;
+        font-size: 22px;
         font-weight: bold;
         color: #ffffff;
-        margin: 10px 0;
+        margin: 6px 0;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        line-height: 1.2;
     }
     .kpi-label {
-        font-size: 14px;
+        font-size: 11px;
         color: #a0a0a0;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        letter-spacing: 0.5px;
+        line-height: 1.3;
     }
     .risk-high { border-left-color: #ff4b4b; }
+    .risk-critical { border-left-color: #8e44ad; }
     .risk-medium { border-left-color: #ffa500; }
     .risk-low { border-left-color: #00cc96; }
     
