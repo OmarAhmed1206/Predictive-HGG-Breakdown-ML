@@ -293,6 +293,7 @@ def main():
             )
             fig.update_traces(marker=dict(size=10, opacity=0.7, line=dict(width=1, color='DarkSlateGrey')))
             st.plotly_chart(fig, use_container_width=True)
+            st.info("**What this shows:** A chronological scatter plot of historical machine breakdowns. The higher the dot, the longer the downtime. **Why it matters:** It helps you spot clusters of failures (e.g., a bad month) and see which fault categories historically take the longest to repair.")
             
         with col2:
             st.subheader("Predictive Maintenance Risk")
@@ -319,6 +320,7 @@ def main():
             ))
             fig_gauge.update_layout(height=250, margin=dict(l=20, r=20, t=30, b=20), template='plotly_dark')
             st.plotly_chart(fig_gauge, use_container_width=True)
+            st.info("**What this shows:** The immediate 7-day risk of failure, given how many days have passed since the last breakdown. **Why it matters:** If this hits the red zone (>70%), you should immediately schedule preventive maintenance or stock up on critical spares.")
             
             # Details
             st.markdown(f"**Elapsed Days Since Last Failure:** {prediction['elapsed_days']:.1f}")
@@ -333,6 +335,7 @@ def main():
                 {"Window": "30 Days", "Probability": f"{risks[30]*100:.1f}%"},
             ])
             st.table(risk_df)
+            st.caption("This table expands the risk gauge to show failure probabilities across different upcoming time horizons.")
             
             # Predicted Fault Type
             st.markdown("---")
@@ -473,6 +476,7 @@ def main():
                 showlegend=True
             )
             st.plotly_chart(fig_timeline, use_container_width=True)
+            st.info("**What this shows:** A unified timeline mapping past historical failures (blue circles) against future predicted failures (colored diamonds). The horizontal lines on predictions show the confidence window (earliest to latest expected dates). **Why it matters:** Visualizes the expected rhythm of future maintenance interventions.")
             
             # Schedule Table
             st.subheader("Predicted Schedule Table")
@@ -486,6 +490,7 @@ def main():
             display_schedule['Earliest Estimate'] = display_schedule['Earliest Estimate'].dt.strftime('%Y-%m-%d')
             display_schedule['Latest Estimate'] = display_schedule['Latest Estimate'].dt.strftime('%Y-%m-%d')
             st.dataframe(display_schedule, use_container_width=True, hide_index=True)
+            st.info("**What this shows:** A precise tabular breakdown of the next expected failures. **Why it matters:** Use this schedule to plan technician shifts and order parts (from the 'Most Likely Cause' column) well in advance of the expected breakdown date.")
             
             # Category distribution in predictions
             st.subheader("Predicted Fault Distribution")
@@ -497,6 +502,7 @@ def main():
                                        hole=0.4, title='Predicted Breakdown Categories',
                                        template='plotly_dark')
                 st.plotly_chart(fig_pred_donut, use_container_width=True)
+                st.caption("Proportion of expected fault types in the simulated future.")
             with col_p2:
                 # Monthly predicted breakdown count
                 schedule_df['pred_month'] = schedule_df['predicted_date'].dt.to_period('M').astype(str)
@@ -507,6 +513,7 @@ def main():
                                          color_discrete_sequence=['#e74c3c'])
                 fig_monthly_pred.update_layout(xaxis_title='Month', yaxis_title='Predicted Breakdowns')
                 st.plotly_chart(fig_monthly_pred, use_container_width=True)
+                st.caption("Distribution of predicted breakdowns across upcoming calendar months.")
             
             # Transition matrix visualization
             st.subheader("Fault Category Transition Probabilities")
@@ -544,6 +551,7 @@ def main():
             fig.add_trace(go.Scatter(x=monthly_counts['month_year'], y=monthly_counts['rolling_avg'], name='3-Mo Rolling Avg', line=dict(color='#ff7f0e', width=3)))
             fig.update_layout(title="Monthly Breakdown Frequency", xaxis_title="Month", yaxis_title="Number of Breakdowns", template='plotly_dark')
             st.plotly_chart(fig, use_container_width=True)
+            st.info("**What this shows:** The raw count of breakdowns per month, overlaid with a 3-month rolling average trendline. **Why it matters:** Helps identify if the machine's reliability is generally improving or degrading over time.")
             
             # Day of week x Month Heatmap
             heatmap_data = df.groupby(['day_of_week', 'month']).size().unstack(fill_value=0)
@@ -560,6 +568,7 @@ def main():
                 template='plotly_dark'
             )
             st.plotly_chart(fig_heat, use_container_width=True)
+            st.info("**What this shows:** A heatmap of when breakdowns occur (Month vs. Day of the Week). **Why it matters:** Reveals scheduling vulnerabilities. For example, if Mondays consistently show high breakdowns, it may indicate start-up issues after weekend shutdowns.")
             
         with col2:
             # MTBF Trend
@@ -569,6 +578,7 @@ def main():
                 fig_mtbf.add_hline(y=mtbf, line_dash="dash", line_color="red", annotation_text="Overall MTBF")
                 fig_mtbf.update_traces(line=dict(color='#2ca02c', width=3))
                 st.plotly_chart(fig_mtbf, use_container_width=True)
+                st.info("**What this shows:** The Mean Time Between Failures (MTBF) calculated on a rolling 10-event basis. **Why it matters:** If the green line is dropping, the machine is breaking down more frequently. If it's rising, reliability is improving.")
             else:
                 st.info("Not enough data for MTBF trend.")
                 
@@ -578,6 +588,7 @@ def main():
                 fig_fail = px.line(fail_df, x='date', y='failure_rate', title="Rolling Failure Rate (30 Days)", template='plotly_dark')
                 fig_fail.update_traces(line=dict(color='#d62728', width=3))
                 st.plotly_chart(fig_fail, use_container_width=True)
+                st.info("**What this shows:** The number of failures occurring in any rolling 30-day window. **Why it matters:** Tracks acute periods of instability. A sharp spike indicates a cluster of related issues (e.g., bad batch of parts, recurring operator error).")
             else:
                 st.info("Not enough data for Rolling Failure Rate.")
                 
@@ -593,22 +604,26 @@ def main():
             fig_dt = px.scatter(df, x='actual_start', y='duration_hours', title="Downtime Duration Over Time", template='plotly_dark', color_discrete_sequence=['#17becf'])
             fig_dt.update_traces(marker=dict(size=8, opacity=0.7))
             st.plotly_chart(fig_dt, use_container_width=True)
+            st.info("**What this shows:** Every historical breakdown plotted by its repair duration. **Why it matters:** Helps spot 'catastrophic' outlier events that took days to repair versus standard minor interventions.")
             
             # Category donut
             cat_counts = df['category'].value_counts().reset_index()
             cat_counts.columns = ['category', 'count']
             fig_donut = px.pie(cat_counts, values='count', names='category', hole=0.4, title="Breakdowns by Category", template='plotly_dark')
             st.plotly_chart(fig_donut, use_container_width=True)
+            st.info("**What this shows:** The raw frequency count of different fault types. **Why it matters:** Identifies which sub-system breaks the most often (e.g., 'Plasma' vs 'Hydraulic').")
             
         with col2:
             # Histogram and Boxplot
             fig_hist = px.histogram(df, x="duration_hours", marginal="box", title="Duration Distribution", template='plotly_dark', color_discrete_sequence=['#9467bd'])
             st.plotly_chart(fig_hist, use_container_width=True)
+            st.info("**What this shows:** The statistical distribution of repair times. **Why it matters:** Shows the 'typical' repair time. A heavily right-skewed tail means most repairs are quick, but a few take an extremely long time.")
             
             # Total Hours by Category
             cat_hours = df.groupby('category')['duration_hours'].sum().reset_index().sort_values('duration_hours', ascending=True)
             fig_bar = px.bar(cat_hours, x='duration_hours', y='category', orientation='h', title="Total Downtime Hours by Category", template='plotly_dark', color_discrete_sequence=['#8c564b'])
             st.plotly_chart(fig_bar, use_container_width=True)
+            st.info("**What this shows:** Cumulative downtime hours consumed by each fault type. **Why it matters:** (Pareto Analysis) A fault might happen frequently (high count) but take 5 minutes to fix, while another happens rarely but takes 10 hours. This chart shows which faults actually cost you the most production time.")
             
             # Stats Table
             stats = {
@@ -646,12 +661,14 @@ def main():
             
             fig_surv.update_layout(title="Overall Survival Probability", xaxis_title="Days", yaxis_title="Probability", template='plotly_dark')
             st.plotly_chart(fig_surv, use_container_width=True)
+            st.info("**What this shows:** The probability that the machine will 'survive' (not break down) over a given number of days since its last repair. The white line is raw data; the blue line is the mathematical model. **Why it matters:** If the blue line drops sharply at day 15, you know the machine rarely survives past 15 days without an issue.")
             
             st.subheader("Conditional Survival (Given Current State)")
             cond_surv_df = generate_conditional_survival_curve(weibull_model, prediction['elapsed_days'])
             fig_cond = px.line(cond_surv_df, x='additional_days', y='survival_prob', title=f"Survival Probability given {prediction['elapsed_days']:.1f} days elapsed", template='plotly_dark')
             fig_cond.update_traces(line=dict(color='#ff007f', width=3))
             st.plotly_chart(fig_cond, use_container_width=True)
+            st.info(f"**What this shows:** Because the machine has already survived for {prediction['elapsed_days']:.1f} days, this curve shows its *remaining* survival probability. **Why it matters:** This is the most accurate reflection of the machine's risk *right now*.")
             
         with col2:
             st.subheader("Model Interpretation")
@@ -722,12 +739,14 @@ def main():
                 fig_act_pred.add_trace(go.Scatter(y=[pred_mean]*len(test_ift), mode='lines', name='Predicted Mean', line=dict(color='blue', dash='dot')))
                 fig_act_pred.update_layout(title="Test Set Inter-Failure Times vs Predictions", xaxis_title="Test Sample Index", yaxis_title="Days", template='plotly_dark')
                 st.plotly_chart(fig_act_pred, use_container_width=True)
+                st.info("**What this shows:** Evaluates the model on 20% of data it was not trained on (the 'Test Set'). Yellow dots are actual breakdown intervals; lines are the model's prediction. **Why it matters:** Proves that the model works on unseen future data, not just memorizing the past.")
                 
                 # Brier scores
                 bs = brier_score_windows(eval_model, test_ift)
                 bs_df = pd.DataFrame({"Window (Days)": list(bs.keys()), "Brier Score": list(bs.values())})
                 fig_bs = px.bar(bs_df, x="Window (Days)", y="Brier Score", title="Brier Score by Window (Lower is Better)", template='plotly_dark')
                 st.plotly_chart(fig_bs, use_container_width=True)
+                st.caption("Brier score measures the accuracy of probabilistic predictions. A score of 0 is a perfect prediction.")
                 
             # Rolling Validation
             st.subheader("Rolling Validation (Expanding Window)")
@@ -736,6 +755,7 @@ def main():
                 fig_roll = px.line(roll_df, x='train_size', y='abs_error', title="Absolute Error over Expanding Training Window", template='plotly_dark')
                 fig_roll.add_trace(go.Scatter(x=roll_df['train_size'], y=roll_df['abs_error'].rolling(5).mean(), name='5-period Moving Avg', line=dict(color='orange')))
                 st.plotly_chart(fig_roll, use_container_width=True)
+                st.info("**What this shows:** How the model's prediction error changes as it receives more historical training data over time. **Why it matters:** An error line trending downward indicates that the model is successfully 'learning' the machine's behavior as time goes on.")
         else:
             st.warning("Not enough data to perform train/test validation.")
 
@@ -762,6 +782,7 @@ def main():
         st.subheader("Filtered Dataset")
         display_cols = ['wo_no', 'actual_start', 'actual_finish', 'category', 'work_type', 'duration_hours', 'inter_failure_days', 'work_details']
         st.dataframe(df[display_cols].sort_values('actual_start', ascending=False), use_container_width=True)
+        st.info("**What this shows:** The raw work order and maintenance log dataset after cleaning and preprocessing. **Why it matters:** Provides full transparency into the data driving the predictions. You can sort, filter, and inspect specific technician notes here.")
         
         # Download button
         csv = df.to_csv(index=False).encode('utf-8')
