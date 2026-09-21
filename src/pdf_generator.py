@@ -12,7 +12,8 @@ class PDFReport(FPDF):
         self.set_font('helvetica', 'I', 10)
         self.set_text_color(100, 100, 100)
         self.cell(0, 10, f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M")}', border=False, ln=True, align='C')
-        self.line(10, 30, 200, 30)
+        # Line width for landscape is 297 - 20 = 277
+        self.line(10, 30, 287, 30)
         self.ln(10)
 
     def footer(self):
@@ -26,7 +27,7 @@ def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days:
     Generates a PDF report for the next 3 months (90 days) of predicted breakdowns.
     Saves it to a temporary location and returns the file path.
     """
-    pdf = PDFReport()
+    pdf = PDFReport(orientation='L')
     pdf.add_page()
 
     # Section 1: Executive Summary
@@ -72,7 +73,8 @@ def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days:
     pdf.set_text_color(255, 255, 255)
     pdf.set_font('helvetica', 'B', 10)
     
-    col_widths = [15, 35, 30, 45, 65]
+    # Landscape width is 277mm usable
+    col_widths = [15, 40, 30, 50, 142]
     headers = ['#', 'Predicted Date', 'Days Away', 'Most Likely Cause', 'Top 3 Probabilities']
     
     for i in range(len(headers)):
@@ -98,8 +100,7 @@ def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days:
             
             # Format top 3 (replace | with comma for space)
             top3 = str(row['top_3_categories']).replace(' | ', ', ')
-            if len(top3) > 40:
-                top3 = top3[:37] + '...'
+            # No truncation needed in landscape mode
             
             # Print row cells
             # Using multi_cell for the last column to handle wrapping if needed, but cell is easier for simple tables
