@@ -54,6 +54,15 @@ def load_and_clean_data(filepath: str) -> pd.DataFrame:
     }
     df = df.rename(columns=rename_map)
     
+    # Defensive guarantee: ensure work_type and work_type_code always exist
+    if 'work_type' not in df.columns:
+        if 'work_type_code' in df.columns:
+            df['work_type'] = df['work_type_code'].astype(str)
+        else:
+            df['work_type'] = 'Corrective'
+    if 'work_type_code' not in df.columns:
+        df['work_type_code'] = 4
+    
     df = df.sort_values('actual_start', ascending=True).reset_index(drop=True)
     return df
 

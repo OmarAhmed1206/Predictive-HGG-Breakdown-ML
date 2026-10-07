@@ -132,8 +132,8 @@ st.markdown("""
 # ─────────────────────────────────────────────
 # Data loading helpers (cached per machine key)
 # ─────────────────────────────────────────────
-@st.cache_data
-def load_data(machine_key: str):
+@st.cache_data(ttl=3600)
+def load_data(machine_key: str, _version: str = "v2"):
     cfg = MACHINE_CONFIG[machine_key]
     file_path = os.path.join(os.path.dirname(__file__), '..', 'data', cfg["file"])
     if not os.path.exists(file_path):
@@ -144,8 +144,8 @@ def load_data(machine_key: str):
     return df
 
 
-@st.cache_resource
-def fit_models(machine_key: str, df: pd.DataFrame):
+@st.cache_resource(ttl=3600)
+def fit_models(machine_key: str, df: pd.DataFrame, _version: str = "v2"):
     ift = df['inter_failure_days'].dropna().values
     if len(ift) < 5:
         return None, None, None, None

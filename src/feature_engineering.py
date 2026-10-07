@@ -24,7 +24,11 @@ def compute_features(df: pd.DataFrame) -> pd.DataFrame:
     
     df['cumulative_count'] = range(1, len(df) + 1)
     
-    df['prev_work_type'] = df['work_type'].shift(1)
+    if 'work_type' in df.columns:
+        df['prev_work_type'] = df['work_type'].shift(1)
+    else:
+        df['work_type'] = 'Corrective'
+        df['prev_work_type'] = 'Corrective'
     df['prev_duration'] = df['duration_hours'].shift(1)
     
     return df
