@@ -17,21 +17,21 @@ def load_and_clean_data(filepath: str) -> pd.DataFrame:
     def get_cat(text):
         if pd.isna(text): return 'Other'
         t = str(text).lower()
-        if any(w in t for w in ['torch', 'plasma', 'consumable', 'ignition']) or ('coolant' in t and not any(w in t for w in ['dust', 'vacuum'])):
+        if any(w in t for w in ['torch', 'plasma', 'consumable', 'ignition', 'hypertherm']) or ('coolant' in t and not any(w in t for w in ['dust', 'vacuum'])):
             return 'Plasma/Torch'
         if any(w in t for w in ['conveyor', 'roller', 'infeed', 'outfeed', 'chain', 'lifter', 'transfer']):
             return 'Conveyor/Roller'
-        if any(w in t for w in ['laser', 'sensor', 'scanning', 'measurement', 'scan']):
+        if any(w in t for w in ['laser', 'sensor', 'scanning', 'measurement', 'scan', 'switch', 'proximity']):
             return 'Laser/Sensor'
         if any(w in t for w in ['dust', 'vacuum', 'filter', 'diaphragm', 'smoke']):
             return 'Dust Collector'
-        if 'hydraulic' in t or 'hose' in t:
+        if any(w in t for w in ['hydraulic', 'hose', 'pressure', 'cylinder']):
             return 'Hydraulic'
         if 'oil' in t:
             return 'Hydraulic'
-        if any(w in t for w in ['alarm', 'program', 'internet', 'panel', 'amplifier', 'fuse', 'robot', 'calibration', 'motion', 'axis']):
+        if any(w in t for w in ['alarm', 'program', 'internet', 'panel', 'amplifier', 'fuse', 'robot', 'calibration', 'motion', 'axis', 'power', 'motor', 'cable', 'electrical', 'wire']):
             return 'Control/Electrical'
-        if any(w in t for w in ['cover', 'telescopic', 'clamp', 'rack', 'pinion', 'bearing', 'bellow']):
+        if any(w in t for w in ['cover', 'telescopic', 'clamp', 'rack', 'pinion', 'bearing', 'bellow', 'blade', 'bolt', 'mechanical', 'saw', 'drill', 'gear', 'wheel', 'guide']):
             return 'Mechanical'
         return 'Other'
         
@@ -48,6 +48,8 @@ def load_and_clean_data(filepath: str) -> pd.DataFrame:
         'Actual Finish': 'actual_finish',
         'Work Typ': 'work_type_code',
         'Work Typ.1': 'work_type',
+        'Work Type': 'work_type_code',
+        'Work Type Description': 'work_type',
         'Work Details': 'work_details'
     }
     df = df.rename(columns=rename_map)

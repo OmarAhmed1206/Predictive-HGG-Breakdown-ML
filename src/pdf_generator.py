@@ -4,11 +4,14 @@ import pandas as pd
 import os
 
 class PDFReport(FPDF):
+    def __init__(self, machine_name="HGG Machine", *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.machine_name = machine_name
+
     def header(self):
-        # Logo placeholder (could add if available)
         self.set_font('helvetica', 'B', 15)
         self.set_text_color(0, 51, 102)  # Dark Blue
-        self.cell(0, 10, 'HGG Predictive Maintenance Report', border=False, ln=True, align='C')
+        self.cell(0, 10, f'{self.machine_name} - Predictive Maintenance Report', border=False, ln=True, align='C')
         self.set_font('helvetica', 'I', 10)
         self.set_text_color(100, 100, 100)
         self.cell(0, 10, f'Generated on: {datetime.now().strftime("%Y-%m-%d %H:%M")}', border=False, ln=True, align='C')
@@ -22,12 +25,12 @@ class PDFReport(FPDF):
         self.set_text_color(128)
         self.cell(0, 10, f'Page {self.page_no()}', 0, 0, 'C')
 
-def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days: float, most_common_fault: str) -> str:
+def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days: float, most_common_fault: str, machine_name: str = "HGG Machine") -> str:
     """
     Generates a PDF report for the next 3 months (90 days) of predicted breakdowns.
     Saves it to a temporary location and returns the file path.
     """
-    pdf = PDFReport(orientation='L')
+    pdf = PDFReport(machine_name=machine_name, orientation='L')
     pdf.add_page()
 
     # Section 1: Executive Summary
@@ -38,7 +41,7 @@ def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days:
     pdf.set_font('helvetica', '', 11)
     pdf.set_text_color(0, 0, 0)
     summary_text = (
-        f"This report outlines the forecasted maintenance schedule for the HGG CNC Profile Coping Machine "
+        f"This report outlines the forecasted maintenance schedule for {machine_name} "
         f"over the next 3 months (90 days). The predictions are generated using a Weibull survival model "
         f"combined with a Markov Chain transition matrix for fault categorization based on historical data."
     )
@@ -129,6 +132,7 @@ def generate_3_month_pdf(schedule_df: pd.DataFrame, mtbf: float, next_pred_days:
         pdf.cell(0, 8, rec, ln=True)
 
     # Save PDF
-    output_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'HGG_3Month_Forecast.pdf')
+    safe_name = "".join(c for c in machine_name if c.isalnum() or c in (' ', '_', '-')).rstrip().replace(' ', '_')
+    output_path = os.path.join(os.path.dirname(__file__), '..', 'data', f'{safe_name}_3Month_Forecast.pdf')
     pdf.output(output_path)
     return output_path

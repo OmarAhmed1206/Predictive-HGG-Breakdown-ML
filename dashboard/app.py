@@ -420,7 +420,7 @@ def show_single_machine(machine_choice: str):
                     if not schedule_df_pdf.empty:
                         next_days = schedule_df_pdf.iloc[0]['days_from_now']
                         most_common = schedule_df_pdf['predicted_category'].value_counts().index[0]
-                        pdf_path = generate_3_month_pdf(schedule_df_pdf, mtbf_full, next_days, most_common)
+                        pdf_path = generate_3_month_pdf(schedule_df_pdf, mtbf_full, next_days, most_common, machine_name=machine_choice)
                         with open(pdf_path, "rb") as pdf_file:
                             st.download_button(
                                 label="Download PDF",
